@@ -72,7 +72,7 @@ Frontend (from `frontend/`):
 ### Screenshots
 Homepage
 
-![Homepage](frontend/public/images/homepage%20(2).png)
+![Homepage](frontend/public/images/homepage.png)
 
 After entering details (results shown)
 
