@@ -12,28 +12,34 @@ Frontend (`frontend/`)
 
 ```text
 frontend/
-  package.json
-  index.html
-  eslint.config.js
-  vite.config.js
-  public/
-    images/
-      afterdetails.png
-      homepage (2).png
-    vite.svg
-  src/
-    main.jsx
-    App.jsx
-    assets/
-      react.svg
+│
+├── package.json
+├── index.html
+├── eslint.config.js
+├── vite.config.js
+│
+├── public/
+│   ├── images/
+│   │   ├── afterdetails.png
+│   │   └── homepage (2).png
+│   └── vite.svg
+│
+└── src/
+    ├── main.jsx
+    ├── App.jsx
+    └── assets/
+        └── react.svg
+
 ```
 
 Backend (`backend/`)
 
 ```text
 backend/
-  package.json
-  server.js
+│
+├── package.json
+└── server.js
+
 ```
 
 ### Prerequisites
