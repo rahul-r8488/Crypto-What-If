@@ -16,7 +16,7 @@ export default function App() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/calculate", {
+      const res = await fetch("https://crypto-what-if-csww.vercel.app/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ crypto, date, amount: Number(amount) }),
