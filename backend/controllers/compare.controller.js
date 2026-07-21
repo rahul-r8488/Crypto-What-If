@@ -3,6 +3,8 @@ import Calculation from "../models/Calculation.model.js";
 import {
   getHistoricalPrice,
   getLivePrice,
+  getMultipleHistoricalPrices,
+  getMultipleLivePrices,
   delay,
 } from "../services/coinlayer.service.js";
 
@@ -85,14 +87,45 @@ export const compare = async (req, res, next) => {
 
   const results = [];
   const errors = [];
+  const sanitizedCoins = coins.map((c) => c.toUpperCase().trim());
 
-  // Process each coin sequentially (respect CoinLayer rate limit)
-  for (const coin of coins) {
-    const symbol = coin.toUpperCase().trim();
+  let historicalRates = {};
+  let liveRates = {};
+
+  try {
+    historicalRates = await getMultipleHistoricalPrices(sanitizedCoins, date);
+  } catch (err) {
+    console.error("Historical batch fetch error:", err.message);
+  }
+
+  try {
+    liveRates = await getMultipleLivePrices(sanitizedCoins);
+  } catch (err) {
+    console.error("Live batch fetch error:", err.message);
+  }
+
+  for (const symbol of sanitizedCoins) {
     try {
-      const priceThen = await getHistoricalPrice(symbol, date);
-      await delay(1000); // respect rate limit
-      const priceNow = await getLivePrice(symbol);
+      let priceThen = historicalRates[symbol];
+      let priceNow = liveRates[symbol];
+
+      // Fallback single fetch if batch didn't contain rate
+      if (!priceThen) {
+        priceThen = await getHistoricalPrice(symbol, date);
+      }
+      if (!priceNow) {
+        priceNow = await getLivePrice(symbol);
+      }
+
+      if (!priceThen) {
+        errors.push({ crypto: symbol, error: `${symbol} has no data for ${date}.` });
+        continue;
+      }
+
+      if (!priceNow) {
+        errors.push({ crypto: symbol, error: `${symbol} has no live price data.` });
+        continue;
+      }
 
       const units = numAmount / priceThen;
       const valueToday = units * priceNow;
@@ -110,10 +143,9 @@ export const compare = async (req, res, next) => {
         valueToday: Number(valueToday.toFixed(2)),
         profit: Number(profit.toFixed(2)),
         roi,
-        roiNum: parseFloat(roiNum), // numeric for sorting
+        roiNum: parseFloat(roiNum),
       });
     } catch (err) {
-      // If one coin fails, record the error but continue with the rest
       errors.push({ crypto: symbol, error: err.message || "Unknown error" });
     }
   }
