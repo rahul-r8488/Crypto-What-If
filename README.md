@@ -146,4 +146,4 @@ Building a full-stack app that integrates third-party financial APIs, databases,
 
 ## 📜 License
 
-MIT License — Feel free to use this project for learning or building your own portfolio!
+ Feel free to use this project for learning or building your own portfolio!
