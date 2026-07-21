@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 
 let isConnected = false;
 
-/**
- * Connect to MongoDB Atlas.
- * Uses a cached connection so Vercel serverless doesn't open a new
- * connection on every request.
- */
 const connectDB = async () => {
   if (mongoose.connection && mongoose.connection.readyState >= 1) {
     return;
@@ -24,3 +19,5 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+
+

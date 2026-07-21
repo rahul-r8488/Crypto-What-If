@@ -19,9 +19,10 @@ export const getHistoricalPrice = async (symbol, date) => {
   const data = await res.json();
 
   if (!data.success) {
+    const errMsg = data.error?.info || `${symbol.toUpperCase()} has no data for ${date}.`;
     throw {
       status: 404,
-      message: `${symbol.toUpperCase()} has no data for ${date}.`,
+      message: errMsg,
       details: data.error?.info,
     };
   }
@@ -52,9 +53,10 @@ export const getMultipleHistoricalPrices = async (symbols, date) => {
   const data = await res.json();
 
   if (!data.success) {
+    const errMsg = data.error?.info || `Failed to fetch price data for ${date}.`;
     throw {
       status: 404,
-      message: `Failed to fetch price data for ${date}.`,
+      message: errMsg,
       details: data.error?.info,
     };
   }
@@ -75,9 +77,10 @@ export const getLivePrice = async (symbol) => {
   const data = await res.json();
 
   if (!data.success) {
+    const errMsg = data.error?.info || "Failed to fetch current price. Please try again later.";
     throw {
       status: 500,
-      message: "Failed to fetch current price. Please try again later.",
+      message: errMsg,
       details: data.error?.info,
     };
   }
