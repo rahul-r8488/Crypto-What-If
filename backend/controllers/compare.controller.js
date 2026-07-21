@@ -89,18 +89,29 @@ export const compare = async (req, res, next) => {
   const errors = [];
   const sanitizedCoins = coins.map((c) => c.toUpperCase().trim());
 
-  for (let i = 0; i < sanitizedCoins.length; i++) {
-    const symbol = sanitizedCoins[i];
+  try {
+    // Call 1: Fetch historical prices for ALL coins in a single API call
+    const historicalRates = await getMultipleHistoricalPrices(sanitizedCoins, date);
 
-    // 800ms delay between coins to respect rate limits without exceeding Vercel 10s timeout
-    if (i > 0) {
-      await delay(800);
-    }
+    // Wait 1.2s to respect CoinLayer free tier per-second rate limit
+    await delay(1200);
 
-    try {
-      const priceThen = await getHistoricalPrice(symbol, date);
-      await delay(500); // 500ms delay between historical and live call
-      const priceNow = await getLivePrice(symbol);
+    // Call 2: Fetch current live prices for ALL coins in a single API call
+    const liveRates = await getMultipleLivePrices(sanitizedCoins);
+
+    for (const symbol of sanitizedCoins) {
+      const priceThen = historicalRates[symbol];
+      const priceNow = liveRates[symbol];
+
+      if (!priceThen) {
+        errors.push({ crypto: symbol, error: `${symbol} has no data for ${date}.` });
+        continue;
+      }
+
+      if (!priceNow) {
+        errors.push({ crypto: symbol, error: `${symbol} has no live price data.` });
+        continue;
+      }
 
       const units = numAmount / priceThen;
       const valueToday = units * priceNow;
@@ -120,9 +131,11 @@ export const compare = async (req, res, next) => {
         roi,
         roiNum: parseFloat(roiNum),
       });
-    } catch (err) {
-      errors.push({ crypto: symbol, error: err.message || "Unknown error" });
     }
+  } catch (batchErr) {
+    return res.status(batchErr.status || 500).json({
+      error: batchErr.message || "Failed to fetch price data.",
+    });
   }
 
   if (results.length === 0) {
