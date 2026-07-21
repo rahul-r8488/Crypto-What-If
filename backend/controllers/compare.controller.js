@@ -92,14 +92,14 @@ export const compare = async (req, res, next) => {
   for (let i = 0; i < sanitizedCoins.length; i++) {
     const symbol = sanitizedCoins[i];
 
-    // Wait 5 seconds between consecutive coin API calls
+    // 800ms delay between coins to respect rate limits without exceeding Vercel 10s timeout
     if (i > 0) {
-      await delay(5000);
+      await delay(800);
     }
 
     try {
       const priceThen = await getHistoricalPrice(symbol, date);
-      await delay(1000); // 1 sec delay between historical and live call for same coin
+      await delay(500); // 500ms delay between historical and live call
       const priceNow = await getLivePrice(symbol);
 
       const units = numAmount / priceThen;
@@ -126,8 +126,9 @@ export const compare = async (req, res, next) => {
   }
 
   if (results.length === 0) {
+    const firstError = errors[0]?.error || "No valid data found for any of the provided coins.";
     return res.status(404).json({
-      error: "No valid data found for any of the provided coins.",
+      error: firstError,
       errors,
     });
   }
