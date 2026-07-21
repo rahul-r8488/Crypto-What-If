@@ -89,43 +89,18 @@ export const compare = async (req, res, next) => {
   const errors = [];
   const sanitizedCoins = coins.map((c) => c.toUpperCase().trim());
 
-  let historicalRates = {};
-  let liveRates = {};
+  for (let i = 0; i < sanitizedCoins.length; i++) {
+    const symbol = sanitizedCoins[i];
 
-  try {
-    historicalRates = await getMultipleHistoricalPrices(sanitizedCoins, date);
-  } catch (err) {
-    console.error("Historical batch fetch error:", err.message);
-  }
+    // Wait 5 seconds between consecutive coin API calls
+    if (i > 0) {
+      await delay(5000);
+    }
 
-  try {
-    liveRates = await getMultipleLivePrices(sanitizedCoins);
-  } catch (err) {
-    console.error("Live batch fetch error:", err.message);
-  }
-
-  for (const symbol of sanitizedCoins) {
     try {
-      let priceThen = historicalRates[symbol];
-      let priceNow = liveRates[symbol];
-
-      // Fallback single fetch if batch didn't contain rate
-      if (!priceThen) {
-        priceThen = await getHistoricalPrice(symbol, date);
-      }
-      if (!priceNow) {
-        priceNow = await getLivePrice(symbol);
-      }
-
-      if (!priceThen) {
-        errors.push({ crypto: symbol, error: `${symbol} has no data for ${date}.` });
-        continue;
-      }
-
-      if (!priceNow) {
-        errors.push({ crypto: symbol, error: `${symbol} has no live price data.` });
-        continue;
-      }
+      const priceThen = await getHistoricalPrice(symbol, date);
+      await delay(1000); // 1 sec delay between historical and live call for same coin
+      const priceNow = await getLivePrice(symbol);
 
       const units = numAmount / priceThen;
       const valueToday = units * priceNow;
